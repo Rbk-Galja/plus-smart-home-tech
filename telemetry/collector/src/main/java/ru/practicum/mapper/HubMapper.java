@@ -1,6 +1,7 @@
 package ru.practicum.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ru.practicum.model.action.HubAction;
 import ru.practicum.model.action.event.DeviceAddedEvent;
 import ru.practicum.model.action.event.DeviceRemoveEvent;
@@ -14,6 +15,7 @@ import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
 @Mapper(componentModel = SPRING)
 public interface HubMapper {
+    @Mapping(target = "type", source = "deviceType")
     DeviceAddedEventAvro toAvro(DeviceAddedEvent event);
 
     DeviceRemovedEventAvro toAvro(DeviceRemoveEvent event);
