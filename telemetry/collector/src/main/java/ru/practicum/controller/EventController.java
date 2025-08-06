@@ -4,8 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +14,7 @@ import ru.practicum.mapper.HubMapper;
 import ru.practicum.mapper.SensorMapper;
 import ru.practicum.model.action.HubAction;
 import ru.practicum.model.sensor.SensorEvent;
+import ru.practicum.producer.KafkaProducerConfig;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 
@@ -22,12 +23,16 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 @RequestMapping("/events")
 @RequiredArgsConstructor
 public class EventController {
-    private final Producer<String, SpecificRecordBase> producer;
+    private final KafkaProducerConfig.EventProducer producer;
     private final HubMapper hubMapper;
     private final SensorMapper sensorMapper;
 
-    private static final String HUB_TOPIC = "telemetry.hubs.v1";
-    private static final String SENSOR_TOPIC = "telemetry.sensors.v1";
+    @Value("${kafka.topic.hubs}")
+    private String hubTopic;
+
+    @Value("${kafka.topic.sensors}")
+    private String sensorTopic;
+
 
     @PostMapping("/sensors")
     public void collectSensorEvent(@Valid @RequestBody SensorEvent event) {
@@ -35,13 +40,13 @@ public class EventController {
         long timestamp = event.getTimestamp().toEpochMilli();
 
         ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(
-                SENSOR_TOPIC,
+                sensorTopic,
                 null,
                 timestamp,
                 event.getHubId(),
                 avro);
 
-        producer.send(producerRecord, (metadata, exception) -> {
+        producer.getProducer().send(producerRecord, (metadata, exception) -> {
             if (exception != null) {
                 log.error("Ошибка при отправке sensor event id={}, Error: {}", event.getId(), exception.getMessage());
                 throw new RuntimeException("Произошла ошибка при отправке sensor event: ", exception);
@@ -58,14 +63,14 @@ public class EventController {
         long timestamp = event.getTimestamp().toEpochMilli();
 
         ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(
-                HUB_TOPIC,
+                hubTopic,
                 null,
                 timestamp,
                 event.getHubId(),
                 avro
         );
 
-        producer.send(producerRecord, (metadata, exception) -> {
+        producer.getProducer().send(producerRecord, (metadata, exception) -> {
             if (exception != null) {
                 log.error("Ошибка при отправке hub event. HubId={}, Error: {}",
                         event.getHubId(), exception.getMessage());
