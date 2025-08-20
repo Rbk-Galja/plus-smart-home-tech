@@ -1,6 +1,6 @@
 package ru.practicum.model.sensor;
 
-public enum SensorType {
+public enum ConditionType {
     MOTION,
     LUMINOSITY,
     SWITCH,
