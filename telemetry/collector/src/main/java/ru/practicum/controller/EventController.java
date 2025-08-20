@@ -1,84 +1,86 @@
 package ru.practicum.controller;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import com.google.protobuf.Empty;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.mapper.HubMapper;
-import ru.practicum.mapper.SensorMapper;
+import net.devh.boot.grpc.server.service.GrpcService;
+import ru.practicum.mapper.hub.handler.HubEventHandler;
+import ru.practicum.mapper.sensor.handler.SensorEventHandler;
 import ru.practicum.model.action.HubAction;
 import ru.practicum.model.sensor.SensorEvent;
-import ru.practicum.producer.KafkaProducerConfig;
-import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
+import ru.practicum.service.EventService;
+import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
-@RestController
-@RequestMapping("/events")
-@RequiredArgsConstructor
-public class EventController {
-    private final KafkaProducerConfig.EventProducer producer;
-    private final HubMapper hubMapper;
-    private final SensorMapper sensorMapper;
+@GrpcService
+public class EventController extends CollectorControllerGrpc.CollectorControllerImplBase {
+    private final Map<SensorEventProto.PayloadCase, SensorEventHandler> sensorHandlers;
+    private final Map<HubEventProto.PayloadCase, HubEventHandler> hubHandlers;
+    private final EventService eventService;
 
-    @Value("${kafka.topic.hubs}")
-    private String hubTopic;
+    public EventController(
+            Set<SensorEventHandler> sensorHandlers,
+            Set<HubEventHandler> hubHandlers,
+            EventService eventService
+    ) {
+        this.sensorHandlers = sensorHandlers.stream()
+                .collect(Collectors.toMap(SensorEventHandler::getMessageType, h -> h));
 
-    @Value("${kafka.topic.sensors}")
-    private String sensorTopic;
+        this.hubHandlers = hubHandlers.stream()
+                .collect(Collectors.toMap(HubEventHandler::getMessageType, h -> h));
 
-
-    @PostMapping("/sensors")
-    public void collectSensorEvent(@Valid @RequestBody SensorEvent event) {
-        SensorEventAvro avro = sensorMapper.toAvro(event);
-        long timestamp = event.getTimestamp().toEpochMilli();
-
-        ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(
-                sensorTopic,
-                null,
-                timestamp,
-                event.getHubId(),
-                avro);
-
-        producer.getProducer().send(producerRecord, (metadata, exception) -> {
-            if (exception != null) {
-                log.error("Ошибка при отправке sensor event id={}, Error: {}", event.getId(), exception.getMessage());
-                throw new RuntimeException("Произошла ошибка при отправке sensor event: ", exception);
-            } else {
-                log.info("Отправка sensor event прошла успешно. Topic: {}, Partition: {}, Offset: {}",
-                        metadata.topic(), metadata.partition(), metadata.offset());
-            }
-        });
+        this.eventService = eventService;
     }
 
-    @PostMapping("/hubs")
-    public void collectHubEvent(@Valid @RequestBody HubAction event) {
-        HubEventAvro avro = hubMapper.toAvro(event);
-        long timestamp = event.getTimestamp().toEpochMilli();
-
-        ProducerRecord<String, SpecificRecordBase> producerRecord = new ProducerRecord<>(
-                hubTopic,
-                null,
-                timestamp,
-                event.getHubId(),
-                avro
-        );
-
-        producer.getProducer().send(producerRecord, (metadata, exception) -> {
-            if (exception != null) {
-                log.error("Ошибка при отправке hub event. HubId={}, Error: {}",
-                        event.getHubId(), exception.getMessage());
-                throw new RuntimeException("Ошибка отправки hub event", exception);
-            } else {
-                log.info("Отправка hub event прошла успешно. Topic: {}, Partition: {}, Offset: {}",
-                        metadata.topic(), metadata.partition(), metadata.offset());
+    @Override
+    public void collectSensorEvent(SensorEventProto request, StreamObserver<Empty> responseObserver) {
+        log.info("Отправка запроса к сенсорам с телом {}", request);
+        try {
+            SensorEventHandler handler = sensorHandlers.get(request.getPayloadCase());
+            if (handler == null) {
+                log.error("Не определен тип сенсора: {}", request.getPayloadCase());
+                throw new IllegalArgumentException("Не найдено значение для " + request.getPayloadCase());
             }
-        });
+
+            SensorEvent javaEvent = handler.toJava(request);
+            eventService.processSensor(javaEvent);
+
+            responseObserver.onNext(Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(new StatusRuntimeException(
+                    Status.INTERNAL.withDescription(e.getMessage()).withCause(e)
+            ));
+        }
+    }
+
+    @Override
+    public void collectHubEvent(HubEventProto request, StreamObserver<Empty> responseObserver) {
+        log.info("Отправка запроса к хабам с телом {}", request);
+        try {
+            HubEventHandler handler = hubHandlers.get(request.getPayloadCase());
+            if (handler == null) {
+                log.error("Не определен тип события: {}", request.getPayloadCase());
+                throw new IllegalArgumentException("Не найдено значение для " + request.getPayloadCase());
+            }
+
+            HubAction javaEvent = handler.toJava(request);
+            eventService.processHub(javaEvent);
+
+            responseObserver.onNext(Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(new StatusRuntimeException(
+                    Status.INTERNAL.withDescription(e.getMessage()).withCause(e)
+            ));
+        }
     }
 }
