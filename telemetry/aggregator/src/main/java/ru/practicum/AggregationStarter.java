@@ -7,7 +7,6 @@ import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,33 +40,39 @@ public class AggregationStarter {
             try {
                 while (true) {
                     ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofSeconds(1));
-                    for (ConsumerRecord<String, SpecificRecordBase> record : records) {
-                        aggregatorService.aggregate((SensorEventAvro)record.value()).ifPresent(snapshot -> {
-                            producer.getProducer().send(new ProducerRecord<>(
-                                    sensorSnapshotTopic,
-                                    null,
-                                    snapshot.getTimestamp().toEpochMilli(),
-                                    snapshot.getHubId(),
-                                    snapshot
-                            ));
-                        });
+                    if (!records.isEmpty()) {
+                        try {
+                            for (ConsumerRecord<String, SpecificRecordBase> record : records) {
+                                aggregatorService.aggregate((SensorEventAvro) record.value()).ifPresent(snapshot -> {
+                                    producer.getProducer().send(new ProducerRecord<>(
+                                            sensorSnapshotTopic,
+                                            null,
+                                            snapshot.getTimestamp().toEpochMilli(),
+                                            snapshot.getHubId(),
+                                            snapshot
+                                    ));
+                                });
 
-                    }
-                    consumer.commitSync();
-                }
+                            }
+                            consumer.commitSync();
+
+                        } catch (Exception e) {
+                            log.error("Ошибка обработки батча сообщений", e);
+                        }
+                    }}
             } catch (WakeupException ignored) {
-                log.info("Неожиданное прерывание работы потребителя Kafka");
+                log.info("Неожиданное прерывание работы консьюмера");
             } catch (Exception e) {
-                log.error("произошла ошибка в процессе обработки событий датчиков", e);
+                log.error("Ошибка во время обработки событий от датчиков", e);
             } finally {
-                    log.info("Закрываем консьюмер");
-                    consumer.close();
-                    log.info("Закрываем продюсер");
+                    log.info("Производим остановку консьюмер");
+                    consumer.close(Duration.ofSeconds(10));
+                    log.info("Производим остановку продюсера");
                     producer.close();
-            }
+                }
         }, "aggregation-thread");
 
         thread.start();
     }
+            }
 
-}

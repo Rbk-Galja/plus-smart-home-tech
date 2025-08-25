@@ -9,11 +9,12 @@ import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
 public class AggregatorServiceImpl implements AggregatorService {
-    private final Map<String, SensorsSnapshotAvro> snapshots = new HashMap<>();
+    private final Map<String, SensorsSnapshotAvro> snapshots = new ConcurrentHashMap<>();
 
     @Override
     public Optional<SensorsSnapshotAvro> aggregate(SensorEventAvro event) {
