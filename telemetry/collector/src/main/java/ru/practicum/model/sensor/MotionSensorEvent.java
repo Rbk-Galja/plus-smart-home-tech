@@ -1,20 +1,23 @@
 package ru.practicum.model.sensor;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter
 @ToString(callSuper = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class MotionSensorEvent extends SensorEvent {
     @NotNull(message = "Указано пустое значение качества связи")
-    private Integer linkQuality;
+    Integer linkQuality;
     @NotNull(message = "Указано пустое значение наличия движения")
-    private Boolean motion;
+    Boolean motion;
     @NotNull(message = "Указано пустое значение напряжения")
-    private Integer voltage;
+    Integer voltage;
 
     @Override
     public SensorEventType getType() {
