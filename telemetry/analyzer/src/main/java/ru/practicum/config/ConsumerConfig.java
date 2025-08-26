@@ -2,50 +2,68 @@ package ru.practicum.config;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 
 import java.util.Properties;
 
 @Configuration
-@ConfigurationProperties(prefix = "analyzer.kafka")
 @Getter
 @Setter
 public class ConsumerConfig {
+    @Value("${analyzer.kafka.bootstrapServers}")
     private String bootstrapServers;
+
+    @Value("${analyzer.kafka.consumer.key-deserializer}")
+    private String keyDeserializer;
+
+    @Value("${analyzer.kafka.consumer.auto-offset-reset}")
+    private String autoOffsetReset;
+
+    @Value("${analyzer.kafka.consumer.enable-auto-commit}")
+    private boolean enableAutoCommit;
+
+    @Value("${analyzer.kafka.hub.group-id}")
+    private String hubGroupId;
+
+    @Value("${analyzer.kafka.consumer.hubs.value-deserializer}")
     private String hubValueDeserializer;
+
+    @Value("${analyzer.kafka.snapshot.group-id}")
+    private String snapshotGroupId;
+
+    @Value("${analyzer.kafka.consumer.snapshots.value-deserializer}")
     private String snapshotValueDeserializer;
-    private String groupHubEvents;
-    private String groupSnapshots;
+
+    @Value("${spring.kafka.consumer.poll-timeout-ms:1000}")
     private int pollTimeoutMs;
 
-    @Bean
-    public Consumer<String, HubEventAvro> hubEventsConsumer() {
-        Properties props = new Properties();
-        props.put("bootstrap.servers", bootstrapServers);
-        props.put("key.deserializer", StringDeserializer.class.getName());
-        props.put("value.deserializer", hubValueDeserializer);
-        props.put("group.id", groupHubEvents);
-        props.put("enable.auto.commit", "true");
-        props.put("max.poll.records", 200);
-        return new KafkaConsumer<>(props);
-    }
 
     @Bean
-    public Consumer<String, SensorsSnapshotAvro> snapshotsConsumer() {
+    public Properties hubConsumerProps() {
         Properties props = new Properties();
-        props.put("bootstrap.servers", bootstrapServers);
-        props.put("key.deserializer", StringDeserializer.class.getName());
-        props.put("value.deserializer", snapshotValueDeserializer);
-        props.put("group.id", groupSnapshots);
-        props.put("enable.auto.commit", "false");
-        props.put("max.poll.records", 50);
-        return new KafkaConsumer<>(props);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializer);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, hubValueDeserializer);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG, hubGroupId);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true); // hub авто-коммитим
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 200);
+        return props;
+    }
+
+
+    @Bean
+    public Properties snapshotConsumerProps() {
+        Properties props = new Properties();
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializer);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, snapshotValueDeserializer);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG, snapshotGroupId);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false); // снапшоты коммитим вручную
+        props.put(org.apache.kafka.clients.consumer.ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 50);
+        return props;
     }
 }
