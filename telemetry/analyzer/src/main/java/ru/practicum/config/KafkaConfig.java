@@ -11,7 +11,7 @@ import java.util.Properties;
 @Configuration
 @Getter
 @Setter
-public class ConsumerConfig {
+public class KafkaConfig {
     @Value("${analyzer.kafka.bootstrapServers}")
     private String bootstrapServers;
 
