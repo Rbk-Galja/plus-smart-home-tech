@@ -53,9 +53,11 @@ public class EventController extends CollectorControllerGrpc.CollectorController
             SensorEvent javaEvent = handler.toJava(request);
             eventService.processSensor(javaEvent);
 
+            log.info("Успешно обработан запрос к хабам, отправлен ответ");
             responseObserver.onNext(Empty.getDefaultInstance());
             responseObserver.onCompleted();
         } catch (Exception e) {
+            log.error("Ошибка при обработке запроса к хабам: {}", e.getMessage(), e);
             responseObserver.onError(new StatusRuntimeException(
                     Status.INTERNAL.withDescription(e.getMessage()).withCause(e)
             ));

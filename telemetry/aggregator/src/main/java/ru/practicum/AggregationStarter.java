@@ -1,6 +1,6 @@
 package ru.practicum;
 
-import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
@@ -28,51 +28,61 @@ public class AggregationStarter {
     @Value("${telemetry.snapshot.topic}")
     private String sensorSnapshotTopic;
 
+    @Value("${kafka.consumer.poll.duration:1}")
+    private int pollDurationSeconds;
+
     private final Consumer<String, SpecificRecordBase> consumer;
     private final KafkaSnapshotProducer.SnapshotProducer producer;
     private final AggregatorService aggregatorService;
+    private volatile boolean running = true;
 
-    @PostConstruct
     public void start() {
         consumer.subscribe(List.of(sensorTopic));
 
-        Thread thread = new Thread(() -> {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("Сработал хук на завершение JVM. Прерываю работу консьюмера.");
+            stop();
+        }));
+
             try {
-                while (true) {
-                    ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(Duration.ofSeconds(1));
+                while (running) {
+                    ConsumerRecords<String, SpecificRecordBase> records = consumer
+                            .poll(Duration.ofSeconds(pollDurationSeconds));
                     if (!records.isEmpty()) {
                         try {
                             for (ConsumerRecord<String, SpecificRecordBase> record : records) {
-                                aggregatorService.aggregate((SensorEventAvro) record.value()).ifPresent(snapshot -> {
-                                    producer.getProducer().send(new ProducerRecord<>(
-                                            sensorSnapshotTopic,
-                                            null,
-                                            snapshot.getTimestamp().toEpochMilli(),
-                                            snapshot.getHubId(),
-                                            snapshot
-                                    ));
-                                });
-
+                                aggregatorService.aggregate((SensorEventAvro) record.value())
+                                        .ifPresent(snapshot -> {
+                                            producer.getProducer().send(new ProducerRecord<>(
+                                                    sensorSnapshotTopic,
+                                                    null,
+                                                    snapshot.getTimestamp().toEpochMilli(),
+                                                    snapshot.getHubId(),
+                                                    snapshot
+                                            ));
+                                        });
                             }
                             consumer.commitSync();
-
                         } catch (Exception e) {
                             log.error("Ошибка обработки батча сообщений", e);
                         }
-                    }}
-            } catch (WakeupException ignored) {
+                    }
+                }
+            } catch (WakeupException e) {
                 log.info("Неожиданное прерывание работы консьюмера");
             } catch (Exception e) {
                 log.error("Ошибка во время обработки событий от датчиков", e);
             } finally {
-                    log.info("Производим остановку консьюмер");
-                    consumer.close(Duration.ofSeconds(10));
-                    log.info("Производим остановку продюсера");
-                    producer.close();
-                }
-        }, "aggregation-thread");
-
-        thread.start();
-    }
+                log.info("Производим остановку консьюмера");
+                consumer.close(Duration.ofSeconds(10));
+                log.info("Производим остановку продюсера");
+                producer.close();
             }
+    }
 
+    @PreDestroy
+    public void stop() {
+        running = false;
+        consumer.wakeup();
+    }
+}

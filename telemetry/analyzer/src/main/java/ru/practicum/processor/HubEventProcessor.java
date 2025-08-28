@@ -8,7 +8,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.practicum.service.HubEventTransactionalService;
+import ru.practicum.service.HubEventService;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
 
 import java.time.Duration;
@@ -22,8 +22,11 @@ public class HubEventProcessor implements Runnable {
     @Value("${topic.hub-events}")
     private String hubEventsTopic;
 
-    private final HubEventTransactionalService hubEventTransactionalService;
+    @Value("${kafka.consumer.poll.timeout.millis:1000}")
+    private long pollTimeoutMillis;
+
     private final Properties hubConsumerProps;
+    private final HubEventService hubEventService;
 
     private volatile boolean running = true;
     private Consumer<String, HubEventAvro> consumer;
@@ -35,13 +38,13 @@ public class HubEventProcessor implements Runnable {
 
         try {
             while (running) {
-                var records = consumer.poll(Duration.ofMillis(1000));
+                var records = consumer.poll(Duration.ofMillis(pollTimeoutMillis));
 
                 records.forEach(record -> {
                     HubEventAvro event = record.value();
                     log.info("Получение события. Хаб: {}, событие: {}", event.getHubId(), event);
 
-                    hubEventTransactionalService.handleEventTransactional(event);
+                    hubEventService.handleEvent(event);
                 });
             }
         } catch (WakeupException e) {
