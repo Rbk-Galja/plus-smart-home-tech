@@ -1,4 +1,4 @@
-package ru.practicum.mapper;
+package ru.practicum.mapper.sensor.mapstruct;
 
 import org.mapstruct.Mapper;
 import ru.practicum.model.sensor.*;
@@ -9,7 +9,7 @@ import java.time.Instant;
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
 
 @Mapper(componentModel = SPRING)
-public interface SensorMapper {
+public interface SensorMapperToAvro {
 
     ClimateSensorAvro toAvro(ClimateSensorEvent event);
 

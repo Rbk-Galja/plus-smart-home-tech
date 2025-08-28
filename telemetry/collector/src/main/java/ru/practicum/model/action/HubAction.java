@@ -3,9 +3,11 @@ package ru.practicum.model.action;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.FieldDefaults;
 import ru.practicum.model.action.event.DeviceAddedEvent;
 import ru.practicum.model.action.event.DeviceRemoveEvent;
 import ru.practicum.model.action.scenario.ScenarioAddedEvent;
@@ -28,11 +30,12 @@ import java.time.Instant;
 @Getter
 @Setter
 @ToString
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public abstract class HubAction {
     @NotBlank(message = "Указан пустой индитификатор хаба")
-    private String hubId;
+    String hubId;
 
-    private Instant timestamp = Instant.now();
+    Instant timestamp = Instant.now();
 
     public abstract HubEventType getType();
 }
