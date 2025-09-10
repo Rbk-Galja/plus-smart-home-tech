@@ -1,16 +1,19 @@
 package ru.practicum.model.action.scenario;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import ru.practicum.model.sensor.SensorType;
+import lombok.experimental.FieldDefaults;
+import ru.practicum.model.sensor.ConditionType;
 
 @Getter
 @Setter
 @ToString
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ScenarioCondition {
-    private String sensorId;
-    private SensorType type;
-    private OperationType operation;
-    private Integer value;
+    String sensorId;
+    ConditionType type;
+    OperationType operation;
+    Integer value;
 }
