@@ -6,9 +6,9 @@ analyzer:
       auto-offset-reset: earliest
       enable-auto-commit: false
       snapshots:
-        value-deserializer: ru.practicum.event_deserializer.SensorSnapshotEventAvroDeserializer
+        value-deserializer: ru.practicum.deserializer.SensorSnapshotEventAvroDeserializer
       hubs:
-        value-deserializer: ru.practicum.event_deserializer.HubEventAvroDeserializer
+        value-deserializer: ru.practicum.deserializer.HubEventAvroDeserializer
     hub:
       group-id: hub-events-group
     snapshot:

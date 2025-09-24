@@ -21,6 +21,4 @@ public interface WarehouseMapper {
     WarehouseAddress toEntity(AddressDto dto);
 
     AddressDto toDto(WarehouseAddress entity);
-
-    BookedProductsDto toBookedProductsDto(Double deliveryWeight, Double deliveryVolume, Boolean fragile);
 }

@@ -1,15 +1,15 @@
 package ru.yandex.practicum.product;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.UUID;
 
 @Getter
 @Setter
+@ToString
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SetProductQuantityStateRequest {
     @NotNull
