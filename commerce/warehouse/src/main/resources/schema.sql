@@ -1,4 +1,4 @@
-CREATE TABLE  IF NOT EXISTS warehouse_products (
+CREATE TABLE IF NOT EXISTS warehouse_products (
     product_id UUID PRIMARY KEY,
     fragile BOOLEAN NOT NULL,
     weight NUMERIC(10,2) NOT NULL CHECK (weight > 0),
@@ -8,7 +8,7 @@ CREATE TABLE  IF NOT EXISTS warehouse_products (
     quantity BIGINT NOT NULL DEFAULT 0 CHECK (quantity >= 0)
 );
 
-CREATE TABLE  IF NOT EXISTS warehouse_address (
+CREATE TABLE IF NOT EXISTS warehouse_address (
     id BIGSERIAL PRIMARY KEY,
     country VARCHAR(100) NOT NULL,
     city VARCHAR(100) NOT NULL,
