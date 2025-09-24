@@ -1,6 +1,6 @@
 kafka:
   bootstrap-servers: localhost:9092
-  value-serializer: ru.practicum.serializer.AvroSerializer
-  value-deserializer: ru.practicum.deserializer.SensorEventAvroDeserializer
+  value-serializer: ru.practicum.event_serializer.AvroSerializer
+  value-deserializer: ru.practicum.event_deserializer.SensorEventAvroDeserializer
   consumer:
     group-id: aggregator-group

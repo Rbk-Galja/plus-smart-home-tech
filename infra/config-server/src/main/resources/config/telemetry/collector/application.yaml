@@ -4,4 +4,4 @@ grpc:
 
 kafka:
   bootstrap-servers: localhost:9092
-  value-serializer: ru.practicum.serializer.AvroSerializer
+  value-serializer: ru.practicum.event_serializer.AvroSerializer
