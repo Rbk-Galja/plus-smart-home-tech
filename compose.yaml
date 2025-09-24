@@ -40,7 +40,7 @@ services:
     image: postgres:16.1
     container_name: warehouse-db
     ports:
-      - "8432:5432"
+      - "8632:5432"
     environment:
       POSTGRES_USER: warehouse
       POSTGRES_PASSWORD: warehouse
