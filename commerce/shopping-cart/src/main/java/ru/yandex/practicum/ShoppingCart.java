@@ -10,6 +10,6 @@ import ru.yandex.practicum.field.client.WarehouseClient;
 @EnableFeignClients(clients = {WarehouseClient.class})
 public class ShoppingCart {
     public static void main(String[] args) {
-        SpringApplication.run(ShoppingCart.class);
+        SpringApplication.run(ShoppingCart.class, args);
     }
 }
