@@ -1,21 +1,15 @@
 package ru.yandex.practicum.exception;
 
 import lombok.Getter;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Getter
-public class SpecifiedProductAlreadyInWarehouseException extends DataIntegrityViolationException {
-    private final String userMessage = "Данный товар уже есть на складе";
+public class SpecifiedProductAlreadyInWarehouseException extends RuntimeException {
+    private final String httpStatus = HttpStatus.BAD_REQUEST.toString();
+    private final String userMessage;
 
-    public SpecifiedProductAlreadyInWarehouseException(String message) {
+    public SpecifiedProductAlreadyInWarehouseException(String message, String userMessage) {
         super(message);
-    }
-
-    public List<StackTraceElement> getFullStackTrace() {
-        return Arrays.asList(this.getStackTrace());
+        this.userMessage = userMessage;
     }
 }

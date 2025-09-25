@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.cart.ShoppingCartDto;
 import ru.yandex.practicum.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.exception.ProductInShoppingCartLowQuantityInWarehouse;
+import ru.yandex.practicum.exception.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.mapper.WarehouseMapper;
 import ru.yandex.practicum.model.WarehouseProduct;
 import ru.yandex.practicum.repository.WarehouseProductRepository;
@@ -39,8 +40,14 @@ public class WarehouseServiceImpl implements WarehouseService {
     @Transactional
     public void createProduct(@Valid NewProductInWarehouseRequest request) {
         log.info("Начинаем добавление нового товара на склад: {}", request);
-        WarehouseProduct product = repository.save(mapper.toEntity(request));
-        log.info("Добавление товара {} на склад прошло успешно", product);
+        repository.findById(request.getProductId())
+                .ifPresent(p -> {
+                    throw new SpecifiedProductAlreadyInWarehouseException(
+                            "Товар уже создан", "Товар с id " + request.getProductId() + " уже создан");
+                });
+
+        repository.save(mapper.toEntity(request));
+        log.info("Добавление товара на склад прошло успешно");
     }
 
     @Override
