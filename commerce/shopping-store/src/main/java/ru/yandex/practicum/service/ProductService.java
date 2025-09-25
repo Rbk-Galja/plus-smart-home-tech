@@ -1,16 +1,16 @@
 package ru.yandex.practicum.service;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import ru.yandex.practicum.product.ProductCategory;
 import ru.yandex.practicum.product.ProductDto;
 import ru.yandex.practicum.product.SetProductQuantityStateRequest;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface ProductService {
-    List<ProductDto> getProductPage(ProductCategory category, Pageable pageable);
+    Page<ProductDto> getProductPage(ProductCategory category, Pageable pageable);
 
     ProductDto createProduct(@Valid ProductDto productDto);
 
