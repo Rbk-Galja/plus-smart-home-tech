@@ -37,9 +37,9 @@ public class CartController {
     }
 
     @PostMapping("/remove")
-    public void deleteProductFromCart(@RequestParam @NotBlank(message = "Имя пользователя на должно быть пустым") String username,
+    public ShoppingCartDto deleteProductFromCart(@RequestParam @NotBlank(message = "Имя пользователя на должно быть пустым") String username,
                                       @RequestBody List<UUID> productIds) {
-        cartService.deleteProductFromCart(username, productIds);
+        return cartService.deleteProductFromCart(username, productIds);
     }
 
     @PostMapping("/change-quantity")

@@ -37,7 +37,7 @@ public class CartServiceImpl implements CartService {
     public ShoppingCartDto getCart(String username) {
         log.info("Начинаем получение корзины для пользователя {}", username);
         Cart cart = repository.findByUsernameWithItems(username)
-                .orElseGet(() -> createCartFromGet(username));
+                .orElseGet(() -> createNewCartInTransaction(username));
         log.info("Получение корзины для пользователя {} завершено: {}", username, cart);
         return mapper.toDto(cart);
     }
@@ -50,23 +50,24 @@ public class CartServiceImpl implements CartService {
             log.error("Список товаров для добавления пустой");
             throw new IllegalArgumentException("Список товаров для добавления не может быть пустым");
         }
-        Cart savedCart = repository.findByUsernameWithItems(username)
+        Cart cart = repository.findByUsernameWithItems(username)
                 .orElseGet(() -> createCartForUser(username));
-        if (!savedCart.isActive()) {
+        if (!cart.isActive()) {
             log.error("Корзина для пользователя {} находится в деактивированном состоянии", username);
             throw new CartDeactivatedException("Корзина пользователя деактивирвоана", "Корзина для пользователя "
                     + username + " деактивирована");
         }
-        ShoppingCartDto checkDto = mapper.toDto(savedCart);
+        ShoppingCartDto checkDto = mapper.toDto(cart);
 
         newProduct.forEach(checkDto::mergeProduct);
 
         client.checkProductState(checkDto);
 
-        updateCartItems(savedCart, newProduct);
-        savedCart = repository.save(savedCart);
-        log.info("Добавление товаров в корзину пользователя {} завершено: {}", username, savedCart);
-        return mapper.toDto(savedCart);
+        updateCartItems(cart, newProduct);
+        cart = repository.save(cart);
+
+        log.info("Добавление товаров в корзину пользователя {} завершено: {}", username, cart);
+        return mapper.toDto(cart);
     }
 
     @Override
@@ -82,10 +83,10 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public void deleteProductFromCart(String username, List<UUID> productIds) {
+    public ShoppingCartDto deleteProductFromCart(String username, List<UUID> productIds) {
         log.info("Начинаем удаление товара из корзины пользователя {}", username);
         Cart cart = repository.findByUsernameWithItems(username)
-                .orElseThrow(() -> new EntityNotFoundException("Корзина для пользователя " + username + " не найдена"));
+                .orElseThrow(() -> new EntityNotFoundException("Корзина для пользователя не найдена: " + username));
         if (!cart.isActive()) {
             log.error("Корзина пользователя {} находится в деактивированном состоянии", username);
             throw new CartDeactivatedException("Корзина пользователя деактивирована", "Корзина пользователя "
@@ -104,6 +105,7 @@ public class CartServiceImpl implements CartService {
 
         cartItems.forEach(cart.getItems()::remove);
         log.info("Удаление товаров прошло успешно");
+        return mapper.toDto(cart);
     }
 
     @Override
@@ -123,8 +125,8 @@ public class CartServiceImpl implements CartService {
                 .filter(item -> item.getId().getProductId().equals(request.getProductId()))
                 .findFirst()
                 .orElseThrow(() -> new NoProductsInShoppingCartException(
-                        "Товара с таким id нет в корзине",
-                        "Товар с Id " + request.getProductId() + " не найден в корзине"
+                        "Товар не найден",
+                        "Товара с Id " + request.getProductId() + " не найдено в корзине"
                 ));
         cartItem.setQuantity(request.getNewQuantity());
         log.info("Обновление количества товара в корзине пользователя {} прошло успешно", username);
@@ -132,7 +134,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private Cart createCartFromGet(String username) {
+    private Cart createNewCartInTransaction(String username) {
         log.info("Создаем корзину для пользователя {}", username);
         return repository.save(
                 Cart.builder()
