@@ -30,7 +30,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductDto> getProductPage(ProductCategory category, Pageable pageable) {
         Page<Product> products = repository.findByCategory(category, pageable);
         log.info("Возвращаем список товаров по запросу: {}", category);
-        return products.map(mapper::toProductDto).stream().toList();
+        return products.map(mapper::toProductDto);
     }
 
     @Override
