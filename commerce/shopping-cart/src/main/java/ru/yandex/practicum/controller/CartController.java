@@ -30,7 +30,6 @@ public class CartController {
         return cartService.addProductsInCart(username, newProduct);
     }
 
-
     @DeleteMapping
     public void deleteCart(@RequestParam @NotBlank(message = "Имя пользователя на должно быть пустым") String username) {
         cartService.deleteCart(username);
@@ -38,7 +37,7 @@ public class CartController {
 
     @PostMapping("/remove")
     public ShoppingCartDto deleteProductFromCart(@RequestParam @NotBlank(message = "Имя пользователя на должно быть пустым") String username,
-                                      @RequestBody List<UUID> productIds) {
+                                                 @RequestBody List<UUID> productIds) {
         return cartService.deleteProductFromCart(username, productIds);
     }
 
