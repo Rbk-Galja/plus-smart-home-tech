@@ -9,5 +9,5 @@ import ru.yandex.practicum.product.ProductCategory;
 import java.util.UUID;
 
 public interface ProductRepository extends JpaRepository<Product, UUID> {
-    Page<Product> findByCategory(ProductCategory productCategory, Pageable pageable);
+    Page<Product> findByProductCategory(ProductCategory productCategory, Pageable pageable);
 }

@@ -16,7 +16,6 @@ import ru.yandex.practicum.product.ProductState;
 import ru.yandex.practicum.product.SetProductQuantityStateRequest;
 import ru.yandex.practicum.repository.ProductRepository;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -29,7 +28,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Page<ProductDto> getProductPage(ProductCategory category, Pageable pageable) {
         log.info("Возвращаем список товаров по запросу: {}", category);
-        return repository.findByCategory(category, pageable).map(mapper::toProductDto);
+        return repository.findByProductCategory(category, pageable).map(mapper::toProductDto);
     }
 
     @Override
