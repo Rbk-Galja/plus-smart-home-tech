@@ -37,7 +37,7 @@ public class CartServiceImpl implements CartService {
     public ShoppingCartDto getCart(String username) {
         log.info("Начинаем получение корзины для пользователя {}", username);
         Cart cart = repository.findByUsernameWithItems(username)
-                .orElseGet(() -> createCart(username));
+                .orElseGet(() -> createCartFromGet(username));
         log.info("Получение корзины для пользователя {} завершено: {}", username, cart);
         return mapper.toDto(cart);
     }
@@ -46,8 +46,12 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public ShoppingCartDto addProductsInCart(String username, Map<UUID, Long> newProduct) {
         log.info("Начинаем добавление товаров в корзину для пользователя {}", username);
+        if (newProduct == null || newProduct.isEmpty()) {
+            log.error("Список товаров для добавления пустой");
+            throw new IllegalArgumentException("Список товаров для добавления не может быть пустым");
+        }
         Cart savedCart = repository.findByUsernameWithItems(username)
-                .orElseGet(() -> createCart(username));
+                .orElseGet(() -> createCartForUser(username));
         if (!savedCart.isActive()) {
             log.error("Корзина для пользователя {} находится в деактивированном состоянии", username);
             throw new CartDeactivatedException("Корзина пользователя деактивирвоана", "Корзина для пользователя "
@@ -128,7 +132,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    private Cart createCart(String username) {
+    private Cart createCartFromGet(String username) {
         log.info("Создаем корзину для пользователя {}", username);
         return repository.save(
                 Cart.builder()
@@ -163,5 +167,13 @@ public class CartServiceImpl implements CartService {
                 .cart(cart)
                 .quantity(quantity)
                 .build();
+    }
+
+    private Cart createCartForUser(String username) {
+        return repository.save(Cart.builder()
+                .username(username)
+                .active(true)
+                .build());
+
     }
 }
