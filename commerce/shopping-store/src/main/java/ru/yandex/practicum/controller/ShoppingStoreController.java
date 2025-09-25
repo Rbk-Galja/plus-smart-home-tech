@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.product.ProductCategory;
 import ru.yandex.practicum.product.ProductDto;
+import ru.yandex.practicum.product.QuantityState;
 import ru.yandex.practicum.product.SetProductQuantityStateRequest;
 import ru.yandex.practicum.service.ProductService;
 
@@ -40,7 +41,9 @@ public class ShoppingStoreController {
     }
 
     @PostMapping("/quantityState")
-    public boolean changeQuantityState(@RequestBody @Valid SetProductQuantityStateRequest productDto) {
+    public boolean changeQuantityState(@RequestParam UUID productId,
+                                       @RequestParam QuantityState quantityState) {
+        SetProductQuantityStateRequest productDto = new SetProductQuantityStateRequest(productId, quantityState);
         return productService.changeQuantityState(productDto);
     }
 
@@ -48,5 +51,4 @@ public class ShoppingStoreController {
     public ProductDto getProductById(@PathVariable UUID productId) {
         return productService.getProductById(productId);
     }
-
 }
