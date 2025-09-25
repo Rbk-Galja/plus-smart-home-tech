@@ -3,6 +3,8 @@ package ru.yandex.practicum.model;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.product.ProductCategory;
 import ru.yandex.practicum.product.ProductState;
@@ -13,7 +15,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "products")
-@Data
+@Getter
+@Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Product {
     @Id

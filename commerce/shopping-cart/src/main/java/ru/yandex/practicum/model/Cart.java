@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Cart {
+
     @Id
     @GeneratedValue
     UUID cartId;
@@ -23,9 +25,11 @@ public class Cart {
     @Column(nullable = false)
     String username;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    Set<CartItem> items;
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    Set<CartItem> items = new HashSet<>();
 
     @Column(nullable = false)
+    @Builder.Default
     boolean active = true;
 }

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "shopping_cart_products")
 @Getter
@@ -18,8 +20,22 @@ public class CartItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("cartId")
+    @JoinColumn(name = "cart_id")
     Cart cart;
 
     @Column(nullable = false)
     Long quantity;
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        CartItem cartItem = (CartItem) o;
+        return Objects.equals(id, cartItem.id) && Objects.equals(cart, cartItem.cart);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, cart);
+    }
 }

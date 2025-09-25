@@ -2,26 +2,27 @@ package ru.yandex.practicum.model;
 
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
 @Embeddable
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CartItemId {
+public class CartItemId implements Serializable {
     UUID cartId;
-    @Getter
     UUID productId;
 
-    public CartItemId() {
-    }
+    public CartItemId() {}
 
     public CartItemId(UUID cartId, UUID productId) {
         this.cartId = cartId;
         this.productId = productId;
     }
+
+    public UUID getCartId() { return cartId; }
+    public UUID getProductId() { return productId; }
 
     @Override
     public boolean equals(Object o) {
