@@ -10,7 +10,7 @@ import ru.yandex.practicum.cart.ChangeProductQuantityRequest;
 import ru.yandex.practicum.cart.ShoppingCartDto;
 import ru.yandex.practicum.exception.CartDeactivatedException;
 import ru.yandex.practicum.exception.NoProductsInShoppingCartException;
-import ru.yandex.practicum.field.client.WarehouseClient;
+import ru.yandex.practicum.feign.client.WarehouseClient;
 import ru.yandex.practicum.mapper.ShoppingCartMapper;
 import ru.yandex.practicum.model.Cart;
 import ru.yandex.practicum.model.CartItem;
