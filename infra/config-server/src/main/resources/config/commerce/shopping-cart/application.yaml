@@ -13,3 +13,5 @@ spring:
     url: jdbc:postgresql://localhost:7432/cart
     username: cart
     password: cart
+server:
+  port: 0

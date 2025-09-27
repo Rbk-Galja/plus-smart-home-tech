@@ -8,8 +8,6 @@ spring:
       discovery:
         enabled: true
         serviceId: config-server
-server:
-  port: 0
 eureka:
   client:
     serviceUrl:

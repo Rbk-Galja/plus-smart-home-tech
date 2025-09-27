@@ -13,3 +13,5 @@ spring:
     url: jdbc:postgresql://localhost:6432/store
     username: store
     password: store
+server:
+  port: 0
