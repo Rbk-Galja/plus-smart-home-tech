@@ -4,8 +4,8 @@ services:
     hostname: kafka
     container_name: kafka
     ports:
-      - "9092:9092" # for client connections
-      - "9101:9101" # JMX
+      - "9092:9092"
+      - "9101:9101"
     restart: unless-stopped
     environment:
       KAFKA_NODE_ID: 1
@@ -22,31 +22,79 @@ services:
     container_name: kafka-init-topics
     depends_on:
       - kafka
-    command: "bash -c \
-                'kafka-topics --create --topic telemetry.sensors.v1 \
-                             --partitions 1 --replication-factor 1 --if-not-exists \
-                             --bootstrap-server kafka:29092 && \
-                kafka-topics --create --topic telemetry.snapshots.v1 \
-                             --partitions 1 --replication-factor 1 --if-not-exists \
-                             --bootstrap-server kafka:29092 && \
-                kafka-topics --create --topic telemetry.hubs.v1 \
-                             --partitions 1 --replication-factor 1 --if-not-exists \
-                             --bootstrap-server kafka:29092'"
+    command: >
+      bash -c '
+        kafka-topics --create --topic telemetry.sensors.v1
+                     --partitions 1 --replication-factor 1 --if-not-exists
+                     --bootstrap-server kafka:29092 &&
+        kafka-topics --create --topic telemetry.snapshots.v1
+                     --partitions 1 --replication-factor 1 --if-not-exists
+                     --bootstrap-server kafka:29092 &&
+        kafka-topics --create --topic telemetry.hubs.v1
+                     --partitions 1 --replication-factor 1 --if-not-exists
+                     --bootstrap-server kafka:29092
+      '
     init: true
 
-    postgres:
-      image: postgres:15
-      container_name: analyzer-postgres
-      restart: always
-      environment:
-        POSTGRES_DB: analyzer
-        POSTGRES_USER: analyzer
-        POSTGRES_PASSWORD: analyzer
-      ports:
-        - "5439:5432"
-      volumes:
-        - ./db/init:/docker-entrypoint-initdb.d
-        - analyzer_pgdata:/var/lib/postgresql/data
+  warehouse-db:
+    image: postgres:16.1
+    container_name: warehouse-db
+    ports:
+      - "8432:5432"
+    environment:
+      POSTGRES_USER: warehouse
+      POSTGRES_PASSWORD: warehouse
+      POSTGRES_DB: warehouse
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U warehouse -d warehouse" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-    volumes:
-      analyzer_pgdata:
+
+  analyzer-db:
+    image: postgres:16.1
+    container_name: analyzer-db
+    restart: always
+    environment:
+      POSTGRES_DB: analyzer
+      POSTGRES_USER: analyzer
+      POSTGRES_PASSWORD: analyzer
+    ports:
+      - "5439:5432"
+
+
+  store-db:
+    image: postgres:16.1
+    container_name: postgres-store
+    ports:
+      - "6432:5432"
+    environment:
+      POSTGRES_USER: store
+      POSTGRES_PASSWORD: store
+      POSTGRES_DB: store
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U store -d store" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  cart-db:
+    image: postgres:16.1
+    container_name: postgres-cart
+    ports:
+      - "7432:5432"
+    environment:
+      POSTGRES_USER: cart
+      POSTGRES_PASSWORD: cart
+      POSTGRES_DB: cart
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U cart -d cart" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+
+
