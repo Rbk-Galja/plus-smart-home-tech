@@ -7,6 +7,9 @@ import ru.yandex.practicum.product.ProductCategory;
 import ru.yandex.practicum.product.ProductDto;
 import ru.yandex.practicum.product.SetProductQuantityStateRequest;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface ProductService {
@@ -21,4 +24,6 @@ public interface ProductService {
     boolean changeQuantityState(@Valid SetProductQuantityStateRequest productDto);
 
     ProductDto getProductById(UUID productId);
+
+    Map<UUID, BigDecimal> getProductPrices(List<UUID> productIds);
 }
