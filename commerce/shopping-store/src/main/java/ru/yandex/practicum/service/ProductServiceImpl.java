@@ -16,7 +16,11 @@ import ru.yandex.practicum.product.ProductState;
 import ru.yandex.practicum.product.SetProductQuantityStateRequest;
 import ru.yandex.practicum.repository.ProductRepository;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -82,5 +86,12 @@ public class ProductServiceImpl implements ProductService {
         return mapper.toProductDto(repository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Продукт с id" + productId + " не найден",
                         "Product not found", new RuntimeException("Underlying cause"))));
+    }
+
+    @Override
+    public Map<UUID, BigDecimal> getProductPrices(List<UUID> productIds) {
+        log.info("Получение цен для товаров: {}", productIds);
+        return repository.findAllByProductIdIn(productIds).stream()
+                .collect(Collectors.toMap(Product::getProductId, Product::getPrice));
     }
 }

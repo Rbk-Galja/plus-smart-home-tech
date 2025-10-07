@@ -10,6 +10,9 @@ import ru.yandex.practicum.product.ProductCategory;
 import ru.yandex.practicum.product.ProductDto;
 import ru.yandex.practicum.product.QuantityState;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @FeignClient(name = "SHOPPING-STORE", path = "/api/v1/shopping-store")
@@ -38,4 +41,7 @@ public interface ShoppingStoreClient {
 
     @GetMapping("/{productId}")
     ProductDto getProductById(@PathVariable("productId") UUID productId);
+
+    @PostMapping("/prices")
+    Map<UUID, BigDecimal> getProductPrices(@RequestBody List<UUID> productIds);
 }
