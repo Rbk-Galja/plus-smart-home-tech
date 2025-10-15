@@ -5,6 +5,7 @@ import org.mapstruct.Mapping;
 import ru.yandex.practicum.model.WarehouseAddress;
 import ru.yandex.practicum.model.WarehouseProduct;
 import ru.yandex.practicum.warehouse.AddressDto;
+import ru.yandex.practicum.warehouse.BookedProductsDto;
 import ru.yandex.practicum.warehouse.NewProductInWarehouseRequest;
 
 import static org.mapstruct.MappingConstants.ComponentModel.SPRING;
@@ -20,4 +21,6 @@ public interface WarehouseMapper {
     WarehouseAddress toEntity(AddressDto dto);
 
     AddressDto toDto(WarehouseAddress entity);
+
+    BookedProductsDto toBookedProductsDto(Double deliveryWeight, Double deliveryVolume, Boolean fragile);
 }
